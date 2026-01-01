@@ -1,0 +1,18 @@
+[package]
+name = "pcbrepair"
+version = "0.1.0"
+authors = ["cyrozap"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+description = "A library for parsing ASUS FZ and ASRock CAE boardview files."
+repository = "https://github.com/cyrozap/pcbrepair-rs"
+categories = ["parser-implementations"]
+edition = "2024"
+
+[dependencies]
+csv = "1.4.0"
+flate2 = { version = "1.1.5", features = ["zlib-rs"], default-features = false }
+
+[dev-dependencies]
+chrono = "0.4.42"
+clap = { version = "4.1.4", features = ["derive"] }
