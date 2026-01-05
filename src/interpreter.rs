@@ -20,6 +20,8 @@
 
 use std::collections::HashMap;
 
+use rust_decimal::Decimal;
+
 use crate::parser::ParsedPcbRepairFile;
 use crate::parser::Units;
 
@@ -27,9 +29,9 @@ use crate::parser::Units;
 pub struct Pin {
     pub name: String,
     pub number: String,
-    pub x_mm: f64,
-    pub y_mm: f64,
-    pub radius_mm: f64,
+    pub x_mm: Decimal,
+    pub y_mm: Decimal,
+    pub radius_mm: Decimal,
 }
 
 #[derive(Debug)]
@@ -44,6 +46,8 @@ pub struct InterpretedPcbRepairFile {
 
 impl InterpretedPcbRepairFile {
     pub fn from_parsed(parsed: &ParsedPcbRepairFile) -> Result<Self, Box<dyn std::error::Error>> {
+        let mm_per_mil: Decimal = Decimal::new(254, 4);
+
         let content = &parsed.content;
 
         let mut footprint_pins = HashMap::new();
@@ -67,16 +71,16 @@ impl InterpretedPcbRepairFile {
 
             // Convert coordinates to millimeters
             let x = match content.units {
-                Units::Mils => net.pin_x * 0.0254,
+                Units::Mils => net.pin_x * mm_per_mil,
                 Units::Millimeters => net.pin_x,
             };
             let y = match content.units {
-                Units::Mils => net.pin_y * 0.0254,
+                Units::Mils => net.pin_y * mm_per_mil,
                 Units::Millimeters => net.pin_y,
             };
 
             let radius = match content.units {
-                Units::Mils => net.radius * 0.0254,
+                Units::Mils => net.radius * mm_per_mil,
                 Units::Millimeters => net.radius,
             };
 
@@ -102,10 +106,11 @@ impl InterpretedPcbRepairFile {
                 continue;
             }
 
-            let total_x: f64 = pins.iter().map(|p| p.x_mm).sum();
-            let total_y: f64 = pins.iter().map(|p| p.y_mm).sum();
-            let avg_x = total_x / pins.len() as f64;
-            let avg_y = total_y / pins.len() as f64;
+            let total_x: Decimal = pins.iter().map(|p| p.x_mm).sum();
+            let total_y: Decimal = pins.iter().map(|p| p.y_mm).sum();
+            let pin_count = Decimal::new(pins.len().try_into()?, 0);
+            let avg_x = total_x / pin_count;
+            let avg_y = total_y / pin_count;
 
             let centered_pins: Vec<Pin> = pins
                 .into_iter()

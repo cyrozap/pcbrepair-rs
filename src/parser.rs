@@ -18,9 +18,11 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::str::FromStr;
 use std::string::String;
 
 use csv;
+use rust_decimal::Decimal;
 
 use crate::decoder::DecodedPcbRepairFile;
 
@@ -55,10 +57,10 @@ pub struct Net {
     pub refdes: String,
     pub pin_number: String,
     pub pin_name: String,
-    pub pin_x: f64,
-    pub pin_y: f64,
+    pub pin_x: Decimal,
+    pub pin_y: Decimal,
     pub test_point: String,
-    pub radius: f64,
+    pub radius: Decimal,
 }
 
 #[derive(Debug)]
@@ -68,10 +70,10 @@ pub struct TestVia {
     pub refdes: String,
     pub pin_number: String,
     pub pin_name: String,
-    pub via_x: f64,
-    pub via_y: f64,
+    pub via_x: Decimal,
+    pub via_y: Decimal,
     pub test_point: String,
-    pub radius: f64,
+    pub radius: Decimal,
 }
 
 #[derive(Debug)]
@@ -175,10 +177,10 @@ impl Content {
                             refdes: String::from_utf8_lossy(&record[2]).to_string(),
                             pin_number: String::from_utf8_lossy(&record[3]).to_string(),
                             pin_name: String::from_utf8_lossy(&record[4]).to_string(),
-                            pin_x: parse_float(&record[5])?,
-                            pin_y: parse_float(&record[6])?,
+                            pin_x: parse_decimal(&record[5])?,
+                            pin_y: parse_decimal(&record[6])?,
                             test_point: String::from_utf8_lossy(&record[7]).to_string(),
-                            radius: parse_float(&record[8])?,
+                            radius: parse_decimal(&record[8])?,
                         });
                     }
                     ParserState::TestVia => {
@@ -188,10 +190,10 @@ impl Content {
                             refdes: String::from_utf8_lossy(&record[3]).to_string(),
                             pin_number: String::from_utf8_lossy(&record[4]).to_string(),
                             pin_name: String::from_utf8_lossy(&record[5]).to_string(),
-                            via_x: parse_float(&record[6])?,
-                            via_y: parse_float(&record[7])?,
+                            via_x: parse_decimal(&record[6])?,
+                            via_y: parse_decimal(&record[7])?,
                             test_point: String::from_utf8_lossy(&record[8]).to_string(),
-                            radius: parse_float(&record[9])?,
+                            radius: parse_decimal(&record[9])?,
                         });
                     }
                     ParserState::GraphicData => {
@@ -352,7 +354,7 @@ impl ParsedPcbRepairFile {
     }
 }
 
-fn parse_float(s: &[u8]) -> Result<f64, Box<dyn std::error::Error>> {
+fn parse_decimal(s: &[u8]) -> Result<Decimal, Box<dyn std::error::Error>> {
     let s = String::from_utf8_lossy(s).to_string().replace(',', ".");
-    s.parse::<f64>().map_err(|e| e.into())
+    Decimal::from_str(s.as_str()).map_err(|e| e.into())
 }

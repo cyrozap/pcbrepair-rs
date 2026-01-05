@@ -109,7 +109,11 @@ fn main() {
         for pin in &info.pins {
             content.push_str(&format!(
                 "  (pad \"{}\" smd circle (at {} {}) (size {} {}) (layers F.Cu F.Paste F.Mask)\n",
-                pin.number, pin.x_mm, pin.y_mm, pin.radius_mm, pin.radius_mm
+                pin.number,
+                pin.x_mm.round_dp(6),
+                pin.y_mm.round_dp(6),
+                pin.radius_mm.round_dp(6),
+                pin.radius_mm.round_dp(6)
             ));
             content.push_str("  )\n");
         }
