@@ -19,8 +19,6 @@
  */
 
 use std::convert::TryInto;
-use std::fs::File;
-use std::io::BufReader;
 use std::io::prelude::*;
 
 use flate2::read::ZlibDecoder;
@@ -107,10 +105,7 @@ pub struct DecodedPcbRepairFile {
 }
 
 impl DecodedPcbRepairFile {
-    pub fn from_filename(filename: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let file = File::open(filename)?;
-        let mut reader = BufReader::new(file);
-
+    pub fn new<R: std::io::Read>(mut reader: R) -> Result<Self, Box<dyn std::error::Error>> {
         let mut buffer = Vec::new();
         reader.read_to_end(&mut buffer)?;
 

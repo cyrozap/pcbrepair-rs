@@ -19,7 +19,9 @@
  */
 
 use std::fs;
+use std::fs::File;
 use std::fs::create_dir_all;
+use std::io::BufReader;
 use std::path::Path;
 
 use chrono;
@@ -39,10 +41,19 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let decoded = match DecodedPcbRepairFile::from_filename(&args.file) {
+    let file = match File::open(&args.file) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Error opening file {:?}: {:?}", &args.file, e);
+            return;
+        }
+    };
+
+    let reader = BufReader::new(file);
+    let decoded = match DecodedPcbRepairFile::new(reader) {
         Ok(pf) => pf,
-        Err(error) => {
-            eprintln!("Error opening file {:?}: {:?}", &args.file, error);
+        Err(e) => {
+            eprintln!("Error decoding file {:?}: {:?}", &args.file, e);
             return;
         }
     };

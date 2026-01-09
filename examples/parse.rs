@@ -18,6 +18,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::fs::File;
+use std::io::BufReader;
+
 use clap::Parser;
 
 use pcbrepair::decoder::*;
@@ -33,10 +36,19 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let decoded = match DecodedPcbRepairFile::from_filename(&args.file) {
+    let file = match File::open(&args.file) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Error opening file {:?}: {:?}", &args.file, e);
+            return;
+        }
+    };
+
+    let reader = BufReader::new(file);
+    let decoded = match DecodedPcbRepairFile::new(reader) {
         Ok(pf) => pf,
-        Err(error) => {
-            eprintln!("Error opening file {:?}: {:?}", &args.file, error);
+        Err(e) => {
+            eprintln!("Error decoding file {:?}: {:?}", &args.file, e);
             return;
         }
     };
