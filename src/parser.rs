@@ -18,6 +18,42 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/*!
+ * # `parser` Module
+ *
+ * This module provides functionality to parse decoded ASUS FZ and ASRock CAE
+ * files into structured data.
+ *
+ * ## Usage Example
+ *
+ * ```no_run
+ * use std::fs::File;
+ * use std::io::BufReader;
+ *
+ * use pcbrepair::decoder::DecodedPcbRepairFile;
+ * use pcbrepair::parser::ParsedPcbRepairFile;
+ *
+ * fn main() -> Result<(), Box<dyn std::error::Error>> {
+ *     // Open the file
+ *     let file = File::open("example.fz")?;
+ *     let reader = BufReader::new(file);
+ *
+ *     // Decode the file
+ *     let decoded = DecodedPcbRepairFile::new(reader)?;
+ *
+ *     // Parse the decoded file
+ *     let parsed = ParsedPcbRepairFile::from_decoded(&decoded)?;
+ *
+ *     // Access parsed data
+ *     for pin in &parsed.content.pins {
+ *         println!("Pin: {}", pin.pin_name);
+ *     }
+ *
+ *     Ok(())
+ * }
+ * ```
+ */
+
 use std::str::FromStr;
 use std::string::String;
 
@@ -36,46 +72,70 @@ enum ParserState {
     ClassedGraphicData,
 }
 
+/// Represents the unit system used in the file (mils or millimeters).
 #[derive(Debug)]
 pub enum Units {
+    /// Unit is in mils (1/1000 inch).
     Mils,
+    /// Unit is in millimeters.
     Millimeters,
 }
 
+/// Represents a symbol in the decoded PCB file.
 #[derive(Debug)]
 pub struct Symbol {
+    /// The reference designator (e.g., "U1") of the symbol.
     pub refdes: String,
+    /// The component insertion code.
     pub comp_insertion_code: u64,
+    /// The name of the symbol.
     pub sym_name: String,
+    /// Whether the symbol is mirrored.
     pub sym_mirror: bool,
+    /// The rotation angle of the symbol in degrees.
     pub sym_rotate: u16,
 }
 
+/// Represents a pin in the decoded PCB file.
 #[derive(Debug)]
 pub struct Pin {
+    /// The name of the net this pin is connected to.
     pub net_name: String,
+    /// The reference designator (e.g., "U1") this pin is part of.
     pub refdes: String,
+    /// The number of the pin.
     pub pin_number: String,
+    /// The name of the pin.
     pub pin_name: String,
+    /// The X-coordinate of the pin on the PCB, in [Content::units] units.
     pub pin_x: Decimal,
+    /// The Y-coordinate of the pin on the PCB, in [Content::units] units.
     pub pin_y: Decimal,
     pub test_point: String,
+    /// The radius of the pin on the PCB, in [Content::units] units.
     pub radius: Decimal,
 }
 
+/// Represents a test via in the decoded PCB file.
 #[derive(Debug)]
 pub struct TestVia {
+    /// The name of the test via.
     pub testvia: String,
+    /// The name of the net this test via is connected to.
     pub net_name: String,
     pub refdes: String,
     pub pin_number: String,
     pub pin_name: String,
+    /// The X-coordinate of the test via on the PCB, in [Content::units] units.
     pub via_x: Decimal,
+    /// The Y-coordinate of the test via on the PCB, in [Content::units] units.
     pub via_y: Decimal,
     pub test_point: String,
+    /// The radius of the test via on the PCB, in [Content::units] units.
     pub radius: Decimal,
 }
 
+/// Represents a graphic data entry in the decoded PCB file.
 #[derive(Debug)]
 pub struct GraphicData {
     pub graphic_data_name: String,
@@ -87,6 +147,7 @@ pub struct GraphicData {
     pub refdes: String,
 }
 
+/// Represents a classed graphic data entry in the decoded PCB file.
 #[derive(Debug)]
 pub struct ClassedGraphicData {
     pub class: String,
@@ -98,17 +159,33 @@ pub struct ClassedGraphicData {
     pub net_name: String,
 }
 
+/// Parsed content of the decoded PCB file.
 #[derive(Debug)]
 pub struct Content {
+    /// The unit system used in the file.
     pub units: Units,
+    /// List of symbols in the file.
     pub symbols: Vec<Symbol>,
+    /// List of pins in the file.
     pub pins: Vec<Pin>,
+    /// List of test vias in the file.
     pub testvias: Vec<TestVia>,
+    /// List of graphic data entries.
     pub graphic_data: Vec<GraphicData>,
+    /// List of classed graphic data entries.
     pub classed_graphic_data: Vec<ClassedGraphicData>,
 }
 
 impl Content {
+    /// Parses the decoded content into structured data.
+    ///
+    /// # Arguments
+    ///
+    /// * `content` - The raw decoded bytes from the file.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the parsed `Content` or an error.
     pub fn from_bytes(content: &[u8]) -> Result<Self, Box<dyn std::error::Error>> {
         let mut symbols = Vec::new();
         let mut pins = Vec::new();
@@ -258,22 +335,35 @@ impl Content {
     }
 }
 
+/// Represents a component in the decoded PCB file's description.
 #[derive(Debug)]
 pub struct Component {
+    /// The part number of the component.
     pub part_number: String,
+    /// The description/name of the component.
     pub description: String,
+    /// The number of times this component is used on the PCB.
     pub quantity: u64,
+    /// List of reference designators on the PCB where this component is used.
     pub location: Vec<String>,
+    /// An alternate part number.
     pub part_number2: String,
 }
 
+/// The PCB file's description information.
 #[derive(Debug)]
 pub struct Description {
+    /// PCB model number.
     pub board_model: String,
+    /// PCB revision.
     pub revision: String,
+    /// Longer PCB model number.
     pub extended_board_model: String,
+    /// Longer PCB revision.
     pub extended_revision: String,
+    /// Part number of the PCB.
     pub part_number: String,
+    /// List of components on the PCB.
     pub components: Vec<Component>,
 }
 
@@ -334,13 +424,25 @@ impl Description {
     }
 }
 
+/// A fully parsed PCB repair file, containing both content and description.
 #[derive(Debug)]
 pub struct ParsedPcbRepairFile {
+    /// The parsed content of the file.
     pub content: Content,
+    /// The parsed description of the file.
     pub description: Description,
 }
 
 impl ParsedPcbRepairFile {
+    /// Parses a decoded PCB repair file into a structured format.
+    ///
+    /// # Arguments
+    ///
+    /// * `decoded` - The decoded file data.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the parsed `ParsedPcbRepairFile` or an error.
     pub fn from_decoded(
         decoded: &DecodedPcbRepairFile,
     ) -> Result<Self, Box<dyn std::error::Error>> {

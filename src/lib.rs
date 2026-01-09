@@ -18,6 +18,56 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/*!
+ * # `pcbrepair` Crate
+ *
+ * A library for decoding, parsing, and interpreting ASUS FZ and ASRock CAE
+ * files.
+ *
+ * This crate provides a full pipeline for working with proprietary ASUS/ASRock
+ * PCB repair files:
+ *
+ * 1. [decoder]: Handles decryption and decompression of the file.
+ * 2. [parser]: Converts the decoded bytes into structured data.
+ * 3. [interpreter]: Transforms parsed data into usable footprint information.
+ *
+ * ## Usage Example
+ *
+ * ```no_run
+ * use std::fs::File;
+ * use std::io::BufReader;
+ *
+ * use pcbrepair::decoder::DecodedPcbRepairFile;
+ * use pcbrepair::parser::ParsedPcbRepairFile;
+ * use pcbrepair::interpreter::InterpretedPcbRepairFile;
+ *
+ * fn main() -> Result<(), Box<dyn std::error::Error>> {
+ *     // Open the file
+ *     let file = File::open("example.fz")?;
+ *     let reader = BufReader::new(file);
+ *
+ *     // Decode the file
+ *     let decoded = DecodedPcbRepairFile::new(reader)?;
+ *
+ *     // Parse the decoded file
+ *     let parsed = ParsedPcbRepairFile::from_decoded(&decoded)?;
+ *
+ *     // Interpret the parsed file
+ *     let interpreted = InterpretedPcbRepairFile::from_parsed(&parsed)?;
+ *
+ *     // Access interpreted footprints
+ *     for (name, info) in &interpreted.footprints {
+ *         println!("Footprint: {}", name);
+ *         for pin in &info.pins {
+ *             println!("  Pin: {} at ({}, {})", pin.number, pin.x_mm, pin.y_mm);
+ *         }
+ *     }
+ *
+ *     Ok(())
+ * }
+ * ```
+ */
+
 pub mod decoder;
 pub mod interpreter;
 pub mod parser;

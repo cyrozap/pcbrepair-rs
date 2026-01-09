@@ -18,6 +18,35 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/*!
+ * # `decoder` Module
+ *
+ * This module provides functionality to decode ASUS FZ and ASRock CAE files.
+ * It handles both decryption and decompression of the file content.
+ *
+ * ## Usage Example
+ *
+ * ```no_run
+ * use std::fs::File;
+ * use std::io::BufReader;
+ *
+ * use pcbrepair::decoder::DecodedPcbRepairFile;
+ *
+ * fn main() -> Result<(), Box<dyn std::error::Error>> {
+ *     // Open the file
+ *     let file = File::open("example.fz")?;
+ *     let reader = BufReader::new(file);
+ *
+ *     // Decode the file
+ *     let decoded = DecodedPcbRepairFile::new(reader)?;
+ *
+ *     // Use decoded.content and decoded.description here
+ *
+ *     Ok(())
+ * }
+ * ```
+ */
+
 use std::convert::TryInto;
 use std::io::prelude::*;
 
@@ -98,13 +127,27 @@ fn decompress(capacity: usize, data: &[u8]) -> Result<Vec<u8>, Box<dyn std::erro
     Ok(buffer)
 }
 
+/// A decoded PCB repair file, containing raw content and description data.
 #[derive(Debug)]
 pub struct DecodedPcbRepairFile {
+    /// The decoded content of the file.
     pub content: Vec<u8>,
+    /// The decoded description of the file.
     pub description: Vec<u8>,
 }
 
 impl DecodedPcbRepairFile {
+    /// Reads and decodes a PCB repair file from a reader.
+    ///
+    /// This function handles decryption and decompression of the file.
+    ///
+    /// # Arguments
+    ///
+    /// * `reader` - A reader over the file data.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the decoded file or an error.
     pub fn new<R: std::io::Read>(mut reader: R) -> Result<Self, Box<dyn std::error::Error>> {
         let mut buffer = Vec::new();
         reader.read_to_end(&mut buffer)?;

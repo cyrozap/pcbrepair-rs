@@ -18,6 +18,49 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/*!
+ * # `interpreter` Module
+ *
+ * This module provides functionality to interpret parsed ASUS FZ and ASRock CAE
+ * files into structured footprint data.
+ *
+ * ## Usage Example
+ *
+ * ```no_run
+ * use std::fs::File;
+ * use std::io::BufReader;
+ *
+ * use pcbrepair::decoder::DecodedPcbRepairFile;
+ * use pcbrepair::parser::ParsedPcbRepairFile;
+ * use pcbrepair::interpreter::InterpretedPcbRepairFile;
+ *
+ * fn main() -> Result<(), Box<dyn std::error::Error>> {
+ *     // Open the file
+ *     let file = File::open("example.fz")?;
+ *     let reader = BufReader::new(file);
+ *
+ *     // Decode the file
+ *     let decoded = DecodedPcbRepairFile::new(reader)?;
+ *
+ *     // Parse the decoded file
+ *     let parsed = ParsedPcbRepairFile::from_decoded(&decoded)?;
+ *
+ *     // Interpret the parsed file
+ *     let interpreted = InterpretedPcbRepairFile::from_parsed(&parsed)?;
+ *
+ *     // Access interpreted footprints
+ *     for (name, info) in &interpreted.footprints {
+ *         println!("Footprint: {}", name);
+ *         for pin in &info.pins {
+ *             println!("  Pin: {} at ({}, {})", pin.number, pin.x_mm, pin.y_mm);
+ *         }
+ *     }
+ *
+ *     Ok(())
+ * }
+ * ```
+ */
+
 use std::collections::HashMap;
 
 use rust_decimal::Decimal;
@@ -25,26 +68,47 @@ use rust_decimal::Decimal;
 use crate::parser::ParsedPcbRepairFile;
 use crate::parser::Units;
 
+/// Represents a pin in a footprint.
 #[derive(Debug)]
 pub struct Pin {
+    /// The name of the pin.
     pub name: String,
+    /// The number of the pin.
     pub number: String,
+    /// The X-coordinate in millimeters.
     pub x_mm: Decimal,
+    /// The Y-coordinate in millimeters.
     pub y_mm: Decimal,
+    /// The radius of the pin in millimeters.
     pub radius_mm: Decimal,
 }
 
+/// Information about a footprint, including its pins.
 #[derive(Debug)]
 pub struct FootprintInfo {
+    /// List of pins in the footprint.
     pub pins: Vec<Pin>,
 }
 
+/// A fully interpreted PCB repair file, containing footprint data.
 #[derive(Debug)]
 pub struct InterpretedPcbRepairFile {
+    /// A map of footprint names to their associated pin information.
     pub footprints: HashMap<String, FootprintInfo>,
 }
 
 impl InterpretedPcbRepairFile {
+    /// Converts a parsed PCB file into an interpreted format.
+    ///
+    /// This includes unit conversion and centering of footprint pins.
+    ///
+    /// # Arguments
+    ///
+    /// * `parsed` - The parsed PCB file data.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the interpreted file or an error.
     pub fn from_parsed(parsed: &ParsedPcbRepairFile) -> Result<Self, Box<dyn std::error::Error>> {
         let mm_per_mil: Decimal = Decimal::new(254, 4);
 
