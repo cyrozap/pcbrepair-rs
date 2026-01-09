@@ -29,7 +29,7 @@ use crate::decoder::DecodedPcbRepairFile;
 enum ParserState {
     Unknown,
     Symbol,
-    Net,
+    Pin,
     Via,
     TestVia,
     GraphicData,
@@ -52,7 +52,7 @@ pub struct Symbol {
 }
 
 #[derive(Debug)]
-pub struct Net {
+pub struct Pin {
     pub net_name: String,
     pub refdes: String,
     pub pin_number: String,
@@ -102,7 +102,7 @@ pub struct ClassedGraphicData {
 pub struct Content {
     pub units: Units,
     pub symbols: Vec<Symbol>,
-    pub nets: Vec<Net>,
+    pub pins: Vec<Pin>,
     pub testvias: Vec<TestVia>,
     pub graphic_data: Vec<GraphicData>,
     pub classed_graphic_data: Vec<ClassedGraphicData>,
@@ -111,7 +111,7 @@ pub struct Content {
 impl Content {
     pub fn from_bytes(content: &[u8]) -> Result<Self, Box<dyn std::error::Error>> {
         let mut symbols = Vec::new();
-        let mut nets = Vec::new();
+        let mut pins = Vec::new();
         let mut testvias = Vec::new();
         let mut graphic_data = Vec::new();
         let mut classed_graphic_data = Vec::new();
@@ -142,7 +142,7 @@ impl Content {
                 } else if &record[1] == b"REFDES" {
                     state = ParserState::Symbol;
                 } else if &record[1] == b"NET_NAME" {
-                    state = ParserState::Net;
+                    state = ParserState::Pin;
                 } else if &record[1] == b"VIAID" {
                     state = ParserState::Via;
                 } else if &record[1] == b"TESTVIA" {
@@ -171,8 +171,8 @@ impl Content {
                                 .parse::<u16>()?,
                         });
                     }
-                    ParserState::Net => {
-                        nets.push(Net {
+                    ParserState::Pin => {
+                        pins.push(Pin {
                             net_name: String::from_utf8_lossy(&record[1]).to_string(),
                             refdes: String::from_utf8_lossy(&record[2]).to_string(),
                             pin_number: String::from_utf8_lossy(&record[3]).to_string(),
@@ -250,7 +250,7 @@ impl Content {
         Ok(Self {
             units,
             symbols,
-            nets,
+            pins,
             testvias,
             graphic_data,
             classed_graphic_data,

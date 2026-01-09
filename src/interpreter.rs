@@ -52,36 +52,36 @@ impl InterpretedPcbRepairFile {
 
         let mut footprint_pins = HashMap::new();
 
-        for net in &content.nets {
-            let fp_name = net.refdes.clone();
+        for board_pin in &content.pins {
+            let fp_name = board_pin.refdes.clone();
 
             // Fixup invalid pin numbers
-            let pin_number = match net.pin_number.as_str() {
-                "" => net.pin_name.clone(),
-                "0" => net.pin_name.clone(),
-                _ => net.pin_number.clone(),
+            let pin_number = match board_pin.pin_number.as_str() {
+                "" => board_pin.pin_name.clone(),
+                "0" => board_pin.pin_name.clone(),
+                _ => board_pin.pin_number.clone(),
             };
 
             // Use a more descriptive name
-            let pin_name = if pin_number != net.pin_name {
-                net.pin_name.clone()
+            let pin_name = if pin_number != board_pin.pin_name {
+                board_pin.pin_name.clone()
             } else {
-                net.net_name.clone()
+                board_pin.net_name.clone()
             };
 
             // Convert coordinates to millimeters
             let x = match content.units {
-                Units::Mils => net.pin_x * mm_per_mil,
-                Units::Millimeters => net.pin_x,
+                Units::Mils => board_pin.pin_x * mm_per_mil,
+                Units::Millimeters => board_pin.pin_x,
             };
             let y = match content.units {
-                Units::Mils => net.pin_y * mm_per_mil,
-                Units::Millimeters => net.pin_y,
+                Units::Mils => board_pin.pin_y * mm_per_mil,
+                Units::Millimeters => board_pin.pin_y,
             };
 
             let radius = match content.units {
-                Units::Mils => net.radius * mm_per_mil,
-                Units::Millimeters => net.radius,
+                Units::Mils => board_pin.radius * mm_per_mil,
+                Units::Millimeters => board_pin.radius,
             };
 
             let pin = Pin {
