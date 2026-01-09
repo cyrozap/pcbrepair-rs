@@ -78,13 +78,13 @@ fn decrypt(data: &[u8], expanded_key: &[u32; 44]) -> Vec<u8> {
     let mut result = data.to_vec();
     let mut keystream = [0u8; 16];
 
-    for i in 0..result.len() {
+    for current_byte in &mut result {
         let (a, _b, _c, _d): (u32, u32, u32, u32) = rc6_encrypt_block(&keystream, expanded_key);
 
         keystream.copy_within(1..16, 0);
-        keystream[15] = result[i];
+        keystream[15] = *current_byte;
 
-        result[i] ^= <u32 as TryInto<u8>>::try_into(a & 0xFF).unwrap();
+        *current_byte ^= <u32 as TryInto<u8>>::try_into(a & 0xFF).unwrap();
     }
 
     result
@@ -119,10 +119,7 @@ impl DecodedPcbRepairFile {
             key: Option<&[u32; 44]>,
         ) -> Result<(Vec<u8>, Vec<u8>), Box<dyn std::error::Error>> {
             let decrypted = match key {
-                Some(k) => {
-                    let d = decrypt(data, k);
-                    d
-                }
+                Some(k) => decrypt(data, k),
                 None => data.to_vec(),
             };
 
