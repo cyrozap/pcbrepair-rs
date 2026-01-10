@@ -65,6 +65,7 @@ use std::collections::HashMap;
 
 use rust_decimal::Decimal;
 
+use crate::parser::Component;
 use crate::parser::ParsedPcbRepairFile;
 use crate::parser::Units;
 
@@ -88,6 +89,39 @@ pub struct Pin {
 pub struct FootprintInfo {
     /// List of pins in the footprint.
     pub pins: Vec<Pin>,
+    /// The description of the footprint.
+    pub description: String,
+}
+
+struct ComponentMap {
+    descriptions: Vec<String>,
+    index_map: HashMap<String, usize>,
+}
+
+impl ComponentMap {
+    fn new(components: &[Component]) -> Self {
+        let mut descriptions = Vec::new();
+        let mut index_map = HashMap::new();
+
+        for component in components {
+            let index = descriptions.len();
+            descriptions.push(component.description.trim().to_string());
+            for refdes in &component.location {
+                index_map.insert(refdes.clone(), index);
+            }
+        }
+
+        Self {
+            descriptions,
+            index_map,
+        }
+    }
+
+    fn get(&self, refdes: &str) -> Option<&str> {
+        self.index_map
+            .get(refdes)
+            .map(|&idx| self.descriptions[idx].as_str())
+    }
 }
 
 /// A fully interpreted PCB repair file, containing footprint data.
@@ -162,6 +196,8 @@ impl InterpretedPcbRepairFile {
                 .push(pin);
         }
 
+        let components = ComponentMap::new(&parsed.description.components);
+
         let mut footprints = HashMap::new();
 
         // Center each footprint's pins around (0, 0)
@@ -185,10 +221,17 @@ impl InterpretedPcbRepairFile {
                 })
                 .collect();
 
+            let description = if let Some(d) = components.get(&fp_name) {
+                d.to_string()
+            } else {
+                String::new()
+            };
+
             footprints.insert(
                 fp_name,
                 FootprintInfo {
                     pins: centered_pins,
+                    description,
                 },
             );
         }

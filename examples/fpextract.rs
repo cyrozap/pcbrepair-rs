@@ -98,10 +98,9 @@ fn main() {
         let current_date = now.format("%Y%m%d").to_string();
         content.push_str(&format!("  (version {})\n", current_date));
         content.push_str("  (generator pcbrepair_fpextract)\n");
-        content.push_str(&format!(
-            "  (descr \"Automatically generated footprint from {}\")\n",
-            base_name
-        ));
+        if !info.description.is_empty() {
+            content.push_str(&format!("  (descr \"{}\")\n", info.description));
+        }
         content.push_str("  (tags \"generated\")\n");
 
         // Add reference and value text
