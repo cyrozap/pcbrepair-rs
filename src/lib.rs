@@ -68,6 +68,7 @@
  * ```
  */
 
+mod crypto;
 pub mod decoder;
 pub mod interpreter;
 pub mod parser;
