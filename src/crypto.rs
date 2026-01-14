@@ -82,3 +82,93 @@ pub fn decrypt(data: &[u8], expanded_key: &[u32; 44]) -> Vec<u8> {
 
     result
 }
+
+#[cfg(test)]
+fn encrypt(data: &[u8], expanded_key: &[u32; 44]) -> Vec<u8> {
+    let mut result = data.to_vec();
+    let mut keystream = [0u8; 16];
+
+    for current_byte in &mut result {
+        let (a, _b, _c, _d): (u32, u32, u32, u32) = rc6_encrypt_block(&keystream, expanded_key);
+
+        *current_byte ^= <u32 as TryInto<u8>>::try_into(a & 0xFF).unwrap();
+
+        keystream.copy_within(1..16, 0);
+        keystream[15] = *current_byte;
+    }
+
+    result
+}
+
+// Key schedule for RC6-32/20/16
+#[cfg(test)]
+fn expand_key(user_key: &[u8; 16]) -> [u32; 44] {
+    const P_32: u32 = 0xB7E15163;
+    const Q_32: u32 = 0x9E3779B9;
+
+    let mut big_l = [
+        u32::from_le_bytes(user_key[0..4].try_into().unwrap()),
+        u32::from_le_bytes(user_key[4..8].try_into().unwrap()),
+        u32::from_le_bytes(user_key[8..12].try_into().unwrap()),
+        u32::from_le_bytes(user_key[12..16].try_into().unwrap()),
+    ];
+
+    let mut big_s = [0; 44];
+
+    big_s[0] = P_32;
+
+    for i in 1..=2 * ROUNDS + 3 {
+        big_s[i] = big_s[i - 1].wrapping_add(Q_32);
+    }
+
+    let mut big_a = 0;
+    let mut big_b = 0;
+    let mut i = 0;
+    let mut j = 0;
+
+    let v = 3 * 44;
+    for _s in 1..=v {
+        big_s[i] = (big_s[i].wrapping_add(big_a).wrapping_add(big_b)).rotate_left(3);
+        big_a = big_s[i];
+        big_l[j] = (big_l[j].wrapping_add(big_a).wrapping_add(big_b))
+            .rotate_left(big_a.wrapping_add(big_b));
+        big_b = big_l[j];
+        i = (i + 1) % 44;
+        j = (j + 1) % 4;
+    }
+
+    big_s
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_rc6_encrypt_block() {
+        let plaintext = [0; 16];
+        let user_key = [0; 16];
+        let ciphertext = [
+            0x8f, 0xc3, 0xa5, 0x36, 0x56, 0xb1, 0xf7, 0x78, 0xc1, 0x29, 0xdf, 0x4e, 0x98, 0x48,
+            0xa4, 0x1e,
+        ];
+        let expanded_key = expand_key(&user_key);
+        let (a, b, c, d) = rc6_encrypt_block(&plaintext, &expanded_key);
+        let mut rc6_encrypt_block_result = Vec::with_capacity(16);
+        rc6_encrypt_block_result.extend(a.to_le_bytes());
+        rc6_encrypt_block_result.extend(b.to_le_bytes());
+        rc6_encrypt_block_result.extend(c.to_le_bytes());
+        rc6_encrypt_block_result.extend(d.to_le_bytes());
+        assert_eq!(&rc6_encrypt_block_result, &ciphertext);
+    }
+
+    #[test]
+    fn test_decrypt() {
+        let data = [0x12, 0x34, 0x56, 0x78, 0xAB, 0xCD];
+        for key in [&FZ_EXPANDED_KEY, &CAE_EXPANDED_KEY] {
+            let encrypted = encrypt(data.as_slice(), key);
+            let decrypted = decrypt(&encrypted, key);
+            assert_eq!(decrypted, data);
+        }
+    }
+}
