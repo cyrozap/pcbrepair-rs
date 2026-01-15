@@ -101,15 +101,15 @@ impl DecodedPcbRepairFile {
                 return Err("Invalid zlib header".into());
             }
 
-            let pointer_offset_maybe: usize =
-                u32::from_le_bytes(decrypted[decrypted.len() - 4..].try_into().unwrap())
-                    .try_into()
-                    .unwrap();
-
             let content_len: usize = u32::from_le_bytes(decrypted[..4].try_into().unwrap())
                 .try_into()
                 .unwrap();
             let content = decompress(content_len, &decrypted[4..])?;
+
+            let pointer_offset_maybe: usize =
+                u32::from_le_bytes(decrypted[decrypted.len() - 4..].try_into().unwrap())
+                    .try_into()
+                    .unwrap();
 
             let pointer_maybe: usize = u32::from_le_bytes(
                 decrypted[decrypted.len() - pointer_offset_maybe - 4
