@@ -140,14 +140,17 @@ fn encrypt(data: &[u8], expanded_key: &[u32; 44]) -> Vec<u8> {
     result
 }
 
-// Key schedule for RC6-32/20/16
+// Key schedule for RC6-32/20/b
 #[cfg(test)]
-fn expand_key_16(user_key: &[u8; 16]) -> [u32; 44] {
+fn expand_key<const N: usize>(user_key: &[u8]) -> [u32; 44] {
     const P_32: u32 = 0xB7E15163;
     const Q_32: u32 = 0x9E3779B9;
 
-    let mut big_l = [0; 4];
-    for i in 0..4 {
+    // Ensure the user_key length matches N * 4 bytes
+    assert_eq!(user_key.len(), N * 4, "User key must be {} bytes", N * 4);
+
+    let mut big_l = [0; N];
+    for i in 0..N {
         big_l[i] = u32::from_le_bytes(user_key[4 * i..4 * i + 4].try_into().unwrap());
     }
 
@@ -164,7 +167,7 @@ fn expand_key_16(user_key: &[u8; 16]) -> [u32; 44] {
     let mut i = 0;
     let mut j = 0;
 
-    let v = 3 * 44;
+    let v = 3 * std::cmp::max(N, 44);
     for _s in 1..=v {
         big_s[i] = (big_s[i].wrapping_add(big_a).wrapping_add(big_b)).rotate_left(3);
         big_a = big_s[i];
@@ -172,48 +175,22 @@ fn expand_key_16(user_key: &[u8; 16]) -> [u32; 44] {
             .rotate_left(big_a.wrapping_add(big_b));
         big_b = big_l[j];
         i = (i + 1) % 44;
-        j = (j + 1) % 4;
+        j = (j + 1) % N;
     }
 
     big_s
 }
 
+// Key schedule for RC6-32/20/16
+#[cfg(test)]
+fn expand_key_16(user_key: &[u8; 16]) -> [u32; 44] {
+    expand_key::<4>(user_key)
+}
+
 // Key schedule for RC6-32/20/256 (used by PCBRepairTool)
 #[cfg(test)]
 fn expand_key_256(user_key: &[u8; 256]) -> [u32; 44] {
-    const P_32: u32 = 0xB7E15163;
-    const Q_32: u32 = 0x9E3779B9;
-
-    let mut big_l = [0; 64];
-    for i in 0..64 {
-        big_l[i] = u32::from_le_bytes(user_key[4 * i..4 * i + 4].try_into().unwrap());
-    }
-
-    let mut big_s = [0; 44];
-
-    big_s[0] = P_32;
-
-    for i in 1..=2 * ROUNDS + 3 {
-        big_s[i] = big_s[i - 1].wrapping_add(Q_32);
-    }
-
-    let mut big_a = 0;
-    let mut big_b = 0;
-    let mut i = 0;
-    let mut j = 0;
-
-    let v = 3 * 64;
-    for _s in 1..=v {
-        big_s[i] = (big_s[i].wrapping_add(big_a).wrapping_add(big_b)).rotate_left(3);
-        big_a = big_s[i];
-        big_l[j] = (big_l[j].wrapping_add(big_a).wrapping_add(big_b))
-            .rotate_left(big_a.wrapping_add(big_b));
-        big_b = big_l[j];
-        i = (i + 1) % 44;
-        j = (j + 1) % 64;
-    }
-
-    big_s
+    expand_key::<64>(user_key)
 }
 
 #[cfg(test)]
