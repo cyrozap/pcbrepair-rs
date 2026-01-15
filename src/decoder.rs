@@ -97,36 +97,43 @@ impl DecodedPcbRepairFile {
                 None => data.to_vec(),
             };
 
-            if decrypted[4] != 0x78 {
+            if decrypted.get(4) != Some(&0x78) {
                 return Err("Invalid zlib header".into());
             }
 
-            let content_len: usize = u32::from_le_bytes(decrypted[..4].try_into().unwrap())
+            let content_len_bytes = decrypted
+                .get(..4)
+                .ok_or("Not enough data to read content length")?;
+            let content_len: usize = u32::from_le_bytes(content_len_bytes.try_into().unwrap())
                 .try_into()
                 .unwrap();
+
             let content = decompress(content_len, &decrypted[4..])?;
 
+            let pointer_offset_maybe_bytes = decrypted
+                .get((decrypted.len() - 4)..)
+                .ok_or("Not enough data to read pointer offset")?;
             let pointer_offset_maybe: usize =
-                u32::from_le_bytes(decrypted[decrypted.len() - 4..].try_into().unwrap())
+                u32::from_le_bytes(pointer_offset_maybe_bytes.try_into().unwrap())
                     .try_into()
                     .unwrap();
 
-            let pointer_maybe: usize = u32::from_le_bytes(
-                decrypted[decrypted.len() - pointer_offset_maybe - 4
-                    ..decrypted.len() - pointer_offset_maybe]
-                    .try_into()
-                    .unwrap(),
-            )
-            .try_into()
-            .unwrap();
+            let pointer_maybe_start = decrypted.len() - pointer_offset_maybe - 4;
+            let pointer_maybe_bytes = decrypted
+                .get(pointer_maybe_start..pointer_maybe_start + 4)
+                .ok_or("Not enough data to read pointer value")?;
+            let pointer_maybe: usize = u32::from_le_bytes(pointer_maybe_bytes.try_into().unwrap())
+                .try_into()
+                .unwrap();
 
-            let description_len: usize = u32::from_le_bytes(
-                decrypted[pointer_maybe..pointer_maybe + 4]
+            let description_len_bytes = decrypted
+                .get(pointer_maybe..pointer_maybe + 4)
+                .ok_or("Not enough data to read description length")?;
+            let description_len: usize =
+                u32::from_le_bytes(description_len_bytes.try_into().unwrap())
                     .try_into()
-                    .unwrap(),
-            )
-            .try_into()
-            .unwrap();
+                    .unwrap();
+
             let description = decompress(
                 description_len,
                 &decrypted[pointer_maybe + 4..decrypted.len() - 4],
