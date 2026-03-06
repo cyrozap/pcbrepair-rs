@@ -70,7 +70,7 @@ use crate::parser::ParsedPcbRepairFile;
 use crate::parser::Units;
 
 /// Represents a pin in a footprint.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pin {
     /// The name of the pin.
     pub name: String,
@@ -85,7 +85,7 @@ pub struct Pin {
 }
 
 /// Information about a footprint, including its pins.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FootprintInfo {
     /// List of pins in the footprint.
     pub pins: Vec<Pin>,
@@ -125,7 +125,7 @@ impl ComponentMap {
 }
 
 /// A fully interpreted PCB repair file, containing footprint data.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InterpretedPcbRepairFile {
     /// A map of footprint names to their associated pin information.
     pub footprints: HashMap<String, FootprintInfo>,

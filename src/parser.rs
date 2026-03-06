@@ -73,7 +73,7 @@ enum ParserState {
 }
 
 /// Represents the unit system used in the file (mils or millimeters).
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Units {
     /// Unit is in mils (1/1000 inch).
     Mils,
@@ -82,7 +82,7 @@ pub enum Units {
 }
 
 /// Represents a symbol in the decoded PCB file.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Symbol {
     /// The reference designator (e.g., "U1") of the symbol.
     pub refdes: String,
@@ -97,7 +97,7 @@ pub struct Symbol {
 }
 
 /// Represents a pin in the decoded PCB file.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pin {
     /// The name of the net this pin is connected to.
     pub net_name: String,
@@ -117,7 +117,7 @@ pub struct Pin {
 }
 
 /// Represents a test via in the decoded PCB file.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TestVia {
     /// The name of the test via.
     pub testvia: String,
@@ -136,7 +136,7 @@ pub struct TestVia {
 }
 
 /// Represents a graphic data entry in the decoded PCB file.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GraphicData {
     pub graphic_data_name: String,
     pub graphic_data_number: u64,
@@ -148,7 +148,7 @@ pub struct GraphicData {
 }
 
 /// Represents a classed graphic data entry in the decoded PCB file.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ClassedGraphicData {
     pub class: String,
     pub subclass: String,
@@ -160,7 +160,7 @@ pub struct ClassedGraphicData {
 }
 
 /// Parsed content of the decoded PCB file.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Content {
     /// The unit system used in the file.
     pub units: Units,
@@ -336,7 +336,7 @@ impl Content {
 }
 
 /// Represents a component in the decoded PCB file's description.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Component {
     /// The part number of the component.
     pub part_number: String,
@@ -351,7 +351,7 @@ pub struct Component {
 }
 
 /// The PCB file's description information.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Description {
     /// PCB model number.
     pub board_model: String,
@@ -425,7 +425,7 @@ impl Description {
 }
 
 /// A fully parsed PCB repair file, containing both content and description.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParsedPcbRepairFile {
     /// The parsed content of the file.
     pub content: Content,

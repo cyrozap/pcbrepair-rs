@@ -64,7 +64,7 @@ fn decompress(capacity: usize, data: &[u8]) -> Result<Vec<u8>, Box<dyn std::erro
 }
 
 /// A decoded PCB repair file, containing raw content and description data.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DecodedPcbRepairFile {
     /// The decoded content of the file.
     pub content: Vec<u8>,
