@@ -407,12 +407,17 @@ impl Description {
                 continue; // Skip malformed lines
             }
 
+            let quantity_str = String::from_utf8_lossy(&record[2]).to_string();
+            let quantity = if quantity_str.is_empty() {
+                0
+            } else {
+                quantity_str.parse::<u64>()?
+            };
+
             components.push(Component {
                 part_number: String::from_utf8_lossy(&record[0]).to_string(),
                 description: String::from_utf8_lossy(&record[1]).to_string(),
-                quantity: String::from_utf8_lossy(&record[2])
-                    .to_string()
-                    .parse::<u64>()?,
+                quantity,
                 location: String::from_utf8_lossy(&record[3])
                     .split_whitespace()
                     .map(String::from)
