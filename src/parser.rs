@@ -382,7 +382,7 @@ impl Description {
 
         let header = lines[0].split('|').collect::<Vec<_>>();
         if header.len() < 5 {
-            return Err("Invalid header format".into());
+            return Err(format!("Invalid header format: {}", lines[0]).into());
         }
 
         let board_model = header[0].to_string();
