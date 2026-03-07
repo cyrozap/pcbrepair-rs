@@ -209,14 +209,10 @@ impl Content {
             }
 
             let first = &record[0];
-            if first == b"A" {
-                if &record[1] == b"UNIT" {
-                    if &record[2] == b"mils" {
-                        units = Units::Mils;
-                    } else {
-                        units = Units::Millimeters;
-                    }
-                } else if &record[1] == b"REFDES" {
+            if first == b"UNIT:millimeters" {
+                units = Units::Millimeters;
+            } else if first == b"A" {
+                if &record[1] == b"REFDES" {
                     state = ParserState::Symbol;
                 } else if &record[1] == b"NET_NAME" {
                     state = ParserState::Pin;
