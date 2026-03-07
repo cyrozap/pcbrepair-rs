@@ -107,24 +107,17 @@ impl DecodedPcbRepairFile {
 
             let content = decompress(content_len, &decrypted[4..])?;
 
-            let pointer_offset_maybe_bytes = decrypted
+            let description_offset_bytes = decrypted
                 .get((decrypted.len() - 4)..)
-                .ok_or("Not enough data to read pointer offset")?;
-            let pointer_offset_maybe: usize =
-                u32::from_le_bytes(pointer_offset_maybe_bytes.try_into().unwrap())
+                .ok_or("Not enough data to read description offset")?;
+            let description_offset: usize =
+                u32::from_le_bytes(description_offset_bytes.try_into().unwrap())
                     .try_into()
                     .unwrap();
 
-            let pointer_maybe_start = decrypted.len() - pointer_offset_maybe - 4;
-            let pointer_maybe_bytes = decrypted
-                .get(pointer_maybe_start..pointer_maybe_start + 4)
-                .ok_or("Not enough data to read pointer value")?;
-            let pointer_maybe: usize = u32::from_le_bytes(pointer_maybe_bytes.try_into().unwrap())
-                .try_into()
-                .unwrap();
-
+            let description_len_bytes_start = decrypted.len() - description_offset;
             let description_len_bytes = decrypted
-                .get(pointer_maybe..pointer_maybe + 4)
+                .get(description_len_bytes_start..description_len_bytes_start + 4)
                 .ok_or("Not enough data to read description length")?;
             let description_len: usize =
                 u32::from_le_bytes(description_len_bytes.try_into().unwrap())
@@ -133,7 +126,7 @@ impl DecodedPcbRepairFile {
 
             let description = decompress(
                 description_len,
-                &decrypted[pointer_maybe + 4..decrypted.len() - 4],
+                &decrypted[description_len_bytes_start + 4..decrypted.len() - 4],
             )?;
 
             Ok((content, description))
