@@ -53,13 +53,10 @@ use flate2::read::ZlibDecoder;
 
 use crate::crypto::*;
 
-fn decompress(capacity: usize, data: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+fn decompress(capacity_hint: usize, data: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let mut decoder = ZlibDecoder::new(data);
-    let mut buffer = Vec::with_capacity(capacity);
-    let s = decoder.read_to_end(&mut buffer)?;
-    if s != capacity {
-        return Err("Decompressed size mismatch".into());
-    }
+    let mut buffer = Vec::with_capacity(capacity_hint);
+    let _ = decoder.read_to_end(&mut buffer)?;
     Ok(buffer)
 }
 
