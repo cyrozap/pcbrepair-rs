@@ -236,6 +236,13 @@ impl Content {
             } else if first == b"S" {
                 match state {
                     ParserState::Symbol => {
+                        let sym_rotate_str = String::from_utf8_lossy(&record[5]).to_string();
+                        let sym_rotate = if sym_rotate_str.is_empty() {
+                            0
+                        } else {
+                            sym_rotate_str.parse::<u16>()?
+                        };
+
                         symbols.push(Symbol {
                             refdes: String::from_utf8_lossy(&record[1]).to_string(),
                             comp_insertion_code: String::from_utf8_lossy(&record[2])
@@ -243,9 +250,7 @@ impl Content {
                                 .parse::<u64>()?,
                             sym_name: String::from_utf8_lossy(&record[3]).to_string(),
                             sym_mirror: &record[4] == b"YES",
-                            sym_rotate: String::from_utf8_lossy(&record[5])
-                                .to_string()
-                                .parse::<u16>()?,
+                            sym_rotate,
                         });
                     }
                     ParserState::Pin => {
