@@ -380,7 +380,10 @@ impl Description {
             return Err("Description is empty".into());
         }
 
-        let header = lines[0].split('|').collect::<Vec<_>>();
+        // Auto-detect header separator: prefer '|' if present, otherwise use space
+        let separator = if lines[0].contains('|') { '|' } else { ' ' };
+
+        let header = lines[0].split(separator).collect::<Vec<_>>();
         if header.len() < 5 {
             return Err(format!("Invalid header format: {}", lines[0]).into());
         }
